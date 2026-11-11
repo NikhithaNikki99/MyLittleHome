@@ -1,4 +1,28 @@
 {
-  "name": "MyLittleHome",
-  "displayName": "MyLittleHome"
+  "expo": {
+    "name": "My Little World",
+    "slug": "my-little-world",
+    "scheme": "mylittleworld",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.mylittleworld.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FBEFF1",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-font",
+      "expo-sharing"
+    ]
+  }
 }
