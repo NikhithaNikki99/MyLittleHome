@@ -59,7 +59,7 @@ export function TodayTab({ data, onAdvance, onCreate }) {
               key={h.id}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: h.complete }}
-              accessibilityLabel={h.targetCount > 1 ? `${h.name}, ${h.doneCount} of ${h.targetCount}` : h.name}
+              accessibilityLabel={`${h.name}${h.targetCount > 1 ? `, ${h.doneCount} of ${h.targetCount}` : ''}${h.note ? `. ${h.note}` : ''}`}
               accessibilityHint={h.targetCount > 1 ? 'Double tap to add one' : 'Double tap to toggle'}
               onPress={() => {
                 Haptics.selectionAsync().catch(() => {});
@@ -82,15 +82,21 @@ export function TodayTab({ data, onAdvance, onCreate }) {
                 >
                   <HabitIcon name={h.icon} color={colors.text} />
                 </View>
-                <AppText
-                  style={{
-                    flex: 1,
-                    textDecorationLine: h.complete ? 'line-through' : 'none',
-                    opacity: h.complete ? 0.7 : 1,
-                  }}
-                >
-                  {h.name}
-                </AppText>
+                <View style={{ flex: 1 }}>
+                  <AppText
+                    style={{
+                      textDecorationLine: h.complete ? 'line-through' : 'none',
+                      opacity: h.complete ? 0.7 : 1,
+                    }}
+                  >
+                    {h.name}
+                  </AppText>
+                  {h.note ? (
+                    <AppText variant="caption" muted>
+                      {h.note}
+                    </AppText>
+                  ) : null}
+                </View>
                 {h.targetCount > 1 ? (
                   <AppText variant="label" muted>
                     {h.doneCount}/{h.targetCount}

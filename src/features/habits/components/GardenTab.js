@@ -4,6 +4,7 @@ import { AppText } from '../../../components/common/AppText';
 import { Card } from '../../../components/common/Card';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { useTheme } from '../../../theme/ThemeProvider';
+import { formatStreak } from '../habitOptions';
 
 // One icon per growth stage. Stages come from the longest run a habit has ever had, so a plant
 // only ever grows: a skipped day never makes it smaller.
@@ -19,7 +20,11 @@ function Plant({ habit }) {
   const { colors, spacing, radii } = useTheme();
   const Icon = STAGE_ICONS[habit.stage.key] ?? Sprout;
   const streakText =
-    habit.currentStreak > 0 ? `${habit.currentStreak}-day streak` : habit.bestStreak > 0 ? `Best ${habit.bestStreak} days` : 'Ready to start';
+    habit.currentStreak > 0
+      ? `Streak: ${formatStreak(habit.currentStreak, habit.streakUnit)}`
+      : habit.bestStreak > 0
+        ? `Best: ${formatStreak(habit.bestStreak, habit.streakUnit)}`
+        : 'Ready to start';
   return (
     <Card
       accessible

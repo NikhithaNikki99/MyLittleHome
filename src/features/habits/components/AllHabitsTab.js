@@ -6,7 +6,7 @@ import { Card } from '../../../components/common/Card';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { HabitIcon } from '../habitIcons';
-import { describeSchedule } from '../habitOptions';
+import { describeSchedule, formatStreak } from '../habitOptions';
 
 function IconButton({ label, onPress, children }) {
   const { touchTarget } = useTheme();
@@ -26,9 +26,9 @@ function IconButton({ label, onPress, children }) {
 function HabitRow({ habit, onEdit, onArchive, onDelete }) {
   const { colors, spacing, radii } = useTheme();
   const detail = [
-    describeSchedule(habit.weekdays),
+    describeSchedule(habit),
     habit.targetCount > 1 ? `${habit.targetCount}× a day` : null,
-    habit.archived ? 'Archived' : habit.currentStreak > 0 ? `${habit.currentStreak}-day streak` : null,
+    habit.archived ? 'Archived' : habit.currentStreak > 0 ? `Streak: ${formatStreak(habit.currentStreak, habit.streakUnit)}` : null,
   ]
     .filter(Boolean)
     .join(' · ');

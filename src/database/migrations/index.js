@@ -8,7 +8,8 @@ import m007 from './007_budgets_savings';
 import m008 from './008_sleep';
 import m009 from './009_goals';
 import m010 from './010_recurring_expenses';
+import m011 from './011_flexible_habit_schedules';
 
 // Append new migrations to the end. Never edit or reorder a migration that has shipped:
 // versions must be unique, ascending, and contiguous from 1.
-export const migrations = [m001, m002, m003, m004, m005, m006, m007, m008, m009, m010];
+export const migrations = [m001, m002, m003, m004, m005, m006, m007, m008, m009, m010, m011];

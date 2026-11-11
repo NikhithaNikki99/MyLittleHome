@@ -4,6 +4,7 @@ import {
   listScheduleDays,
 } from '../../database/repositories/habitRepository';
 import { getHabitsForDate } from './habitService';
+import { groupWeekdays, scheduleFromRow, streakUnitOf } from './habitSchedule';
 import {
   computeStreaks,
   gardenStage,
@@ -22,20 +23,12 @@ export async function loadHabitsOverview(db, today) {
     getHabitsForDate(db, today),
   ]);
 
-  const weekdaysByHabit = new Map();
-  for (const r of scheduleRows) {
-    if (!weekdaysByHabit.has(r.habit_id)) weekdaysByHabit.set(r.habit_id, []);
-    weekdaysByHabit.get(r.habit_id).push(r.weekday);
-  }
+  const weekdaysByHabit = groupWeekdays(scheduleRows);
   const completedByHabit = groupCompletedDays(completedRows);
 
   const habits = habitRows.map((r) => {
-    const weekdays = weekdaysByHabit.get(r.id) ?? [];
-    const streaks = computeStreaks(
-      { id: r.id, startDate: r.start_date, weekdays },
-      completedByHabit.get(r.id) ?? new Set(),
-      today,
-    );
+    const schedule = scheduleFromRow(r, weekdaysByHabit.get(r.id) ?? []);
+    const streaks = computeStreaks(schedule, completedByHabit.get(r.id) ?? new Set(), today);
     return {
       id: r.id,
       name: r.name,
@@ -44,7 +37,12 @@ export async function loadHabitsOverview(db, today) {
       targetCount: r.target_count,
       startDate: r.start_date,
       archived: r.archived === 1,
-      weekdays,
+      scheduleType: schedule.scheduleType,
+      weekdays: schedule.weekdays,
+      intervalDays: schedule.intervalDays,
+      weeklyTarget: schedule.weeklyTarget,
+      monthDay: schedule.monthDay,
+      streakUnit: streakUnitOf(schedule),
       currentStreak: streaks.current,
       bestStreak: streaks.best,
       stage: gardenStage(streaks.best),
@@ -52,15 +50,14 @@ export async function loadHabitsOverview(db, today) {
   });
 
   const active = habits.filter((h) => !h.archived);
-  const statsInput = active.map((h) => ({ id: h.id, startDate: h.startDate, weekdays: h.weekdays }));
-  const week = weeklyProgress(statsInput, completedByHabit, today);
+  const week = weeklyProgress(active, completedByHabit, today);
 
   return {
     today,
     dueToday,
     dueCount: dueToday.length,
     completedCount: dueToday.filter((h) => h.complete).length,
-    streakDays: overallStreak(statsInput, completedByHabit, today),
+    streakDays: overallStreak(active, completedByHabit, today),
     weekPercent: week.percent,
     habits,
     garden: active,

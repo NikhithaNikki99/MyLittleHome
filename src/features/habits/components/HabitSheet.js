@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native';
 import { AppText } from '../../../components/common/AppText';
 import { BottomSheet } from '../../../components/common/BottomSheet';
 import { Button } from '../../../components/common/Button';
+import { Chip } from '../../../components/common/Chip';
 import { FormError } from '../../../components/common/FormError';
 import { TextField } from '../../../components/common/TextField';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -15,10 +16,16 @@ import {
   ALL_WEEKDAYS,
   HABIT_COLOR_KEYS,
   HABIT_ICON_KEYS,
+  INTERVAL_RANGE,
   MAX_HABIT_NAME_LENGTH,
   MAX_HABIT_TARGET,
+  SCHEDULE_TYPES,
   WEEKDAY_OPTIONS,
+  WEEKLY_TARGET_RANGE,
 } from '../habitOptions';
+
+const WEEKLY_CHOICES = Array.from({ length: WEEKLY_TARGET_RANGE.max }, (_, i) => i + WEEKLY_TARGET_RANGE.min);
+const WHOLE_NUMBER = /^\d{1,3}$/;
 
 const COLOR_NAMES = {
   accentSage: 'Sage',
@@ -34,7 +41,11 @@ export function HabitSheet({ visible, habit, onClose, onSaved }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('sprout');
   const [color, setColor] = useState('accentSage');
+  const [scheduleType, setScheduleType] = useState('weekdays');
   const [weekdays, setWeekdays] = useState(ALL_WEEKDAYS);
+  const [weeklyTarget, setWeeklyTarget] = useState(3);
+  const [interval, setIntervalText] = useState('2');
+  const [monthDay, setMonthDay] = useState('1');
   const [target, setTarget] = useState('1');
   const { busy, error, setError, run } = useSubmit(onSaved);
   const editing = Boolean(habit);
@@ -44,7 +55,11 @@ export function HabitSheet({ visible, habit, onClose, onSaved }) {
     setName(habit?.name ?? '');
     setIcon(habit?.icon ?? 'sprout');
     setColor(habit?.color ?? 'accentSage');
-    setWeekdays(habit?.weekdays ?? ALL_WEEKDAYS);
+    setScheduleType(habit?.scheduleType ?? 'weekdays');
+    setWeekdays(habit?.weekdays?.length ? habit.weekdays : ALL_WEEKDAYS);
+    setWeeklyTarget(habit?.weeklyTarget ?? 3);
+    setIntervalText(String(habit?.intervalDays ?? 2));
+    setMonthDay(String(habit?.monthDay ?? 1));
     setTarget(String(habit?.targetCount ?? 1));
     setError(null);
   }, [visible, habit, setError]);
@@ -55,8 +70,20 @@ export function HabitSheet({ visible, habit, onClose, onSaved }) {
   const save = () =>
     run(async () => {
       const t = target.trim();
-      if (!/^\d{1,3}$/.test(t)) throw new ValidationError(`Target must be a whole number from 1 to ${MAX_HABIT_TARGET}.`);
-      const input = { name, icon, color, targetCount: Number(t), weekdays };
+      if (!WHOLE_NUMBER.test(t)) throw new ValidationError(`Target must be a whole number from 1 to ${MAX_HABIT_TARGET}.`);
+      const input = { name, icon, color, targetCount: Number(t), scheduleType };
+      if (scheduleType === 'weekdays') input.weekdays = weekdays;
+      if (scheduleType === 'weekly_count') input.weeklyTarget = weeklyTarget;
+      if (scheduleType === 'interval') {
+        if (!WHOLE_NUMBER.test(interval.trim())) {
+          throw new ValidationError(`Choose between every ${INTERVAL_RANGE.min} and every ${INTERVAL_RANGE.max} days.`);
+        }
+        input.intervalDays = Number(interval.trim());
+      }
+      if (scheduleType === 'monthly_day') {
+        if (!WHOLE_NUMBER.test(monthDay.trim())) throw new ValidationError('Choose a day of the month from 1 to 31.');
+        input.monthDay = Number(monthDay.trim());
+      }
       if (editing) await habitActions.update(habit.id, input);
       else await habitActions.create(input);
     });
@@ -73,34 +100,97 @@ export function HabitSheet({ visible, habit, onClose, onSaved }) {
       />
 
       <View style={{ gap: spacing.sm }}>
-        <AppText variant="label">Days</AppText>
-        <View style={{ flexDirection: 'row', gap: spacing.xs }}>
-          {WEEKDAY_OPTIONS.map((d) => {
-            const selected = weekdays.includes(d.value);
-            return (
-              <Pressable
-                key={d.value}
-                accessibilityRole="checkbox"
-                accessibilityLabel={d.label}
-                accessibilityState={{ checked: selected }}
-                onPress={() => toggleDay(d.value)}
-                style={{
-                  flex: 1,
-                  minHeight: touchTarget,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: radii.pill,
-                  borderWidth: 1.5,
-                  borderColor: selected ? colors.primary : colors.border,
-                  backgroundColor: selected ? colors.primarySoft : colors.surface,
-                }}
-              >
-                <AppText variant="label">{d.short}</AppText>
-              </Pressable>
-            );
-          })}
+        <AppText variant="label">How often</AppText>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          {SCHEDULE_TYPES.map((t) => (
+            <Chip key={t.key} label={t.label} selected={scheduleType === t.key} onPress={() => setScheduleType(t.key)} />
+          ))}
         </View>
       </View>
+
+      {scheduleType === 'weekdays' ? (
+        <View style={{ gap: spacing.sm }}>
+          <AppText variant="label">Days</AppText>
+          <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+            {WEEKDAY_OPTIONS.map((d) => {
+              const selected = weekdays.includes(d.value);
+              return (
+                <Pressable
+                  key={d.value}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={d.label}
+                  accessibilityState={{ checked: selected }}
+                  onPress={() => toggleDay(d.value)}
+                  style={{
+                    flex: 1,
+                    minHeight: touchTarget,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: radii.pill,
+                    borderWidth: 1.5,
+                    borderColor: selected ? colors.primary : colors.border,
+                    backgroundColor: selected ? colors.primarySoft : colors.surface,
+                  }}
+                >
+                  <AppText variant="label">{d.short}</AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
+      {scheduleType === 'weekly_count' ? (
+        <View style={{ gap: spacing.sm }}>
+          <AppText variant="label">Days per week</AppText>
+          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {WEEKLY_CHOICES.map((n) => (
+              <Chip
+                key={n}
+                label={String(n)}
+                accessibilityLabel={n === 1 ? 'Once a week' : `${n} days a week`}
+                selected={weeklyTarget === n}
+                onPress={() => setWeeklyTarget(n)}
+              />
+            ))}
+          </View>
+          <AppText variant="caption" muted>
+            Any days you like, Monday to Sunday. It stays on Today until the week's goal is met.
+          </AppText>
+        </View>
+      ) : null}
+
+      {scheduleType === 'interval' ? (
+        <View style={{ gap: spacing.xs }}>
+          <TextField
+            label="Repeat every (days)"
+            value={interval}
+            onChangeText={setIntervalText}
+            keyboardType="number-pad"
+            maxLength={3}
+            placeholder="2"
+          />
+          <AppText variant="caption" muted>
+            Counted from the day the habit started. It stays on Today until you do it, so a late day still counts.
+          </AppText>
+        </View>
+      ) : null}
+
+      {scheduleType === 'monthly_day' ? (
+        <View style={{ gap: spacing.xs }}>
+          <TextField
+            label="Day of the month"
+            value={monthDay}
+            onChangeText={setMonthDay}
+            keyboardType="number-pad"
+            maxLength={2}
+            placeholder="1"
+          />
+          <AppText variant="caption" muted>
+            In shorter months it falls on the last day. It stays on Today until you do it.
+          </AppText>
+        </View>
+      ) : null}
 
       <TextField
         label="Times per day"

@@ -14,6 +14,7 @@ const I = 'int';
 const R = 'real';
 
 // type: text | int | real. `nullable` columns accept null. Order of columns is the order exported.
+// A third entry is the value used when a backup made before the column existed leaves it out.
 export const BACKUP_TABLES = [
   { name: 'app_settings', columns: { key: [T], value: [T], updated_at: [T] } },
   {
@@ -57,6 +58,7 @@ export const BACKUP_TABLES = [
     columns: {
       id: [T], name: [T], icon: [T], color: [T], target_count: [I], start_date: [T],
       archived: [I], created_at: [T], updated_at: [T],
+      schedule_type: [T, false, 'weekdays'], interval_days: [I, true], weekly_target: [I, true], month_day: [I, true],
     },
   },
   { name: 'habit_schedule_days', columns: { habit_id: [T], weekday: [I] } },
@@ -217,7 +219,11 @@ export function validateBackupText(text, { currentSchemaVersion, byteLength }) {
       for (const key of Object.keys(row)) {
         if (!allowed.includes(key)) fail(`This backup has an unexpected field (${t.name}.${key}).`);
       }
-      for (const col of allowed) checkValue(t.name, col, row[col], t.columns[col]);
+      for (const col of allowed) {
+        const spec = t.columns[col];
+        if (row[col] === undefined && spec[2] !== undefined) row[col] = spec[2];
+        checkValue(t.name, col, row[col], spec);
+      }
     }
     counts[t.name] = rows.length;
   }
