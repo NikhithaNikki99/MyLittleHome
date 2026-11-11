@@ -9,6 +9,8 @@ import { getCategoryStyle } from '../categoryStyle';
 import { getBudgetOverview } from '../budgetService';
 import { getRecentExpenses } from '../expenseService';
 import { BudgetSummaryCard, LoadGate, TransactionRow, useExpenseNavigation } from '../parts';
+import { getSubscriptionsSummary, postDueRecurring } from '../recurringService';
+import { SubscriptionsCard } from '../SubscriptionsCard';
 import { useExpenseQuery } from '../useExpenseData';
 
 const COLUMNS = 4;
@@ -69,19 +71,26 @@ export function OverviewTab({ onOpenBudget }) {
   const { colors, spacing } = useTheme();
   const nav = useExpenseNavigation();
   const query = useExpenseQuery(async (db) => {
-    const [overview, recent] = await Promise.all([getBudgetOverview(db, monthKeyOf(toDateKey())), getRecentExpenses(db, 5)]);
-    return { overview, recent };
+    await postDueRecurring(db).catch(() => {});
+    const [overview, recent, subscriptions] = await Promise.all([
+      getBudgetOverview(db, monthKeyOf(toDateKey())),
+      getRecentExpenses(db, 5),
+      getSubscriptionsSummary(db),
+    ]);
+    return { overview, recent, subscriptions };
   }, []);
 
   return (
     <LoadGate query={query}>
-      {({ overview, recent }) => (
+      {({ overview, recent, subscriptions }) => (
         <>
           <BudgetSummaryCard
             overview={overview}
             actionLabel={overview.overall ? null : 'Set a monthly budget'}
             onAction={overview.overall ? undefined : onOpenBudget}
           />
+
+          <SubscriptionsCard summary={subscriptions} onPress={nav.openSubscriptions} />
 
           <View style={{ gap: spacing.sm }}>
             <AppText variant="heading">Quick Add</AppText>

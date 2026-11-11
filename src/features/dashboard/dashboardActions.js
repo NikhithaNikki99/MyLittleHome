@@ -5,6 +5,7 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { toDateKey } from '../../utils/dates';
 import { ValidationError } from '../../utils/errors';
 import { addTransaction } from '../expenses/expenseService';
+import { postDueRecurring } from '../expenses/recurringService';
 import { advanceHabit, createHabit } from '../habits/habitService';
 import { addTask, toggleTask } from '../planner/taskService';
 import { addWater, addWeight, setMood } from '../wellness/wellnessService';
@@ -15,6 +16,8 @@ export async function refreshDashboard() {
   store.setLoading();
   try {
     const db = await getDatabase();
+    // Add any subscription charges that fell due since the app was last open. A failure here must not hide the dashboard.
+    await postDueRecurring(db).catch(() => {});
     store.setData(await loadDashboard(db, toDateKey()));
   } catch (error) {
     store.setError(error);

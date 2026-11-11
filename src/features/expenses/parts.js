@@ -19,6 +19,9 @@ export function useExpenseNavigation() {
     addExpense: (params = {}) => router.push({ pathname: ADD_ROUTE, params }),
     editTransaction: (id) => router.push({ pathname: ADD_ROUTE, params: { id } }),
     openBreakdown: () => router.push('/trackers/expenses/breakdown'),
+    openSubscriptions: () => router.push('/trackers/expenses/subscriptions'),
+    addSubscription: () => router.push('/trackers/expenses/recurring'),
+    editSubscription: (id) => router.push({ pathname: '/trackers/expenses/recurring', params: { id } }),
   };
 }
 

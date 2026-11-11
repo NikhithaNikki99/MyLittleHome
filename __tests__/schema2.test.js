@@ -22,10 +22,11 @@ test('upgrades from an installed schema v5 (the Milestone 2 build) keeping all d
 
   const applied = await runMigrations(db, migrations);
 
-  expect(applied).toEqual([6, 7, 8, 9]);
+  expect(applied).toEqual(migrations.slice(5).map((m) => m.version));
+  expect(applied[0]).toBe(6);
   expect(await getSetting(db, 'theme_id')).toBe('pinkDiary');
   expect((await db.getAllAsync('SELECT * FROM transactions')).length).toBe(1);
-  expect((await db.getFirstAsync('PRAGMA user_version')).user_version).toBe(9);
+  expect((await db.getFirstAsync('PRAGMA user_version')).user_version).toBe(migrations.length);
 });
 
 describe('diary', () => {

@@ -40,6 +40,19 @@ export const BACKUP_TABLES = [
     },
   },
   {
+    name: 'recurring_expenses',
+    columns: {
+      id: [T], title: [T], amount_paise: [I], category_id: [T], frequency: [T], start_date: [T],
+      end_date: [T, true], is_active: [I], notes: [T, true], created_at: [T], updated_at: [T],
+    },
+  },
+  {
+    name: 'recurring_expense_occurrences',
+    columns: {
+      id: [T], recurring_id: [T], due_date: [T], status: [T], transaction_id: [T, true], created_at: [T],
+    },
+  },
+  {
     name: 'habits',
     columns: {
       id: [T], name: [T], icon: [T], color: [T], target_count: [I], start_date: [T],
@@ -216,6 +229,7 @@ export function summarizeCounts(counts) {
   const parts = [
     ['diary entries', counts.diary_entries],
     ['expenses and income', counts.transactions],
+    ['subscriptions', counts.recurring_expenses],
     ['habits', counts.habits],
     ['to-dos', counts.tasks],
     ['goals', counts.goals],
