@@ -9,6 +9,9 @@ import { FADE_MS, remainingMs, shouldHide } from './splashTiming';
 // pointerEvents="none" while fading means a tap is never swallowed by a picture that is on its way out.
 const SPLASH_SOURCE = require('../../../assets/splash-screen.png');
 
+// React Native gives a bundled image its pixel size as width and height, which beat absoluteFill's insets; 100% overrides them.
+const PICTURE_STYLE = { width: '100%', height: '100%', resizeMode: 'cover' };
+
 export function SplashOverlay({ appReady }) {
   const opacity = useRef(new Animated.Value(1)).current;
   const shownAt = useRef(null);
@@ -50,7 +53,7 @@ export function SplashOverlay({ appReady }) {
       importantForAccessibility="no-hide-descendants"
       style={[StyleSheet.absoluteFill, { opacity }]}
     >
-      <Image source={SPLASH_SOURCE} resizeMode="cover" onLoad={onLoaded} style={StyleSheet.absoluteFill} fadeDuration={0} />
+      <Image source={SPLASH_SOURCE} onLoad={onLoaded} style={PICTURE_STYLE} fadeDuration={0} />
     </Animated.View>
   );
 }
