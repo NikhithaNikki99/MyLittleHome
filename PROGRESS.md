@@ -247,29 +247,35 @@ Decision (user, 2026-11-11): **skip widgets for now.** No native code, dependenc
 | 4 Export and validated restore | Built and tested, awaiting device acceptance; PDF needs one dev-client rebuild |
 | 5 Widgets | Investigated; skipped by decision |
 
-Final automated state: **28 suites, 597 tests passing**, `expo-doctor` 21/21, Android bundle compiles. **Not yet done on a device:** phases 1 to 4 and the earlier-listed unverified screens. The Wellness "Water this week" clipped-text bug is still open.
+Final automated state: **29 suites, 604 tests passing**, `expo-doctor` 21/21, Android bundle compiles. **Not yet done on a device:** phases 1 to 4 and the earlier-listed unverified screens. The Wellness "Water this week" clipped-text bug is still open.
 
-## App icon and splash screen (applied 2026-11-12, not yet seen on a device)
-The user added six files in `Images/` (their originals are left untouched). The built assets are in `assets/`; `app.json` points at them.
+## App icon and splash screen (2026-11-12, not yet seen on a device)
+The user supplied six files in `Images/` and asked for them to be used **exactly as provided, with no changes**. An earlier version of this work edited them (made the icon's white canvas transparent, shrank the adaptive layers, built a plane-only splash); the user said that was wrong, and it was reverted.
 
-| File in `assets/` | Made from | What was done and why |
-|---|---|---|
-| `icon.png` | `Images/app-icon.png` | The supplied file is a rounded square on a **white, fully opaque canvas**, which would show white corners. The white was made transparent by a flood fill from the corners only (white inside the clouds or plane is kept), then the artwork was cropped and re-padded to 1024 px. |
-| `android-icon-foreground.png`, `android-icon-monochrome.png` | `Images/adaptive-foreground.png`, `adaptive-monochrome.png` | The supplied layers **overflow Android's circular launcher mask** (farthest content pixel 438 px from its centre; the circle radius is about 338 px), so the plane's tip was cut off. Both were scaled by the same factor (0.709) and centred; the farthest pixel is now 311 px, inside the circle. Rendered under circle, squircle and themed-monochrome masks to check. |
-| `android-icon-background.png` | `Images/adaptive-background.png` | Copied unchanged. |
-| `splash-icon.png` | the plane and heart trail from `adaptive-foreground.png` | Fitted inside Android 12's splash circle (321 px from centre against 341 px). |
+**Launcher icon: the supplied files, byte for byte** (each copy was checked identical with `cmp`):
+| In `assets/` | Is |
+|---|---|
+| `icon.png` | `Images/app-icon.png` |
+| `android-icon-foreground.png` | `Images/adaptive-foreground.png` |
+| `android-icon-background.png` | `Images/adaptive-background.png` |
+| `android-icon-monochrome.png` | `Images/adaptive-monochrome.png` |
 
-Splash configuration (`app.json`, plugin `expo-splash-screen` ~57.0.11, newly installed): background `#4BB1F4` (the top colour of the supplied splash background), image `splash-icon.png`, width 240, contain.
+**Splash screen: the supplied `splash-screen-preview.png`, full-screen and unedited**, shown by the app, not by Android's system splash.
+- Why: Android's system splash can only show a small centred icon (in a circle on Android 12 and later). Running the real `expo-splash-screen` plugin on the supplied 1080x1920 picture produced a 1152 px **square crop of its middle** ("y Little W..."), so it could not be used there.
+- How: the system splash is a plain sky-blue screen (`#4BB1F4`, the top colour of the supplied background) with a fully transparent 1 px image (`assets/splash-blank.png`; every generated density has maximum alpha 0). `src/features/splash/SplashOverlay.js` then draws `assets/splash-screen.png` (a byte-identical copy of the supplied file) full-screen with `resizeMode="cover"` from the first frame and fades it out. The native splash is hidden only after the picture has loaded, so there is no gap. `app/_layout.js` mounts it above the app.
+- When it goes: once fonts are loaded and the app lock state is ready (`useAppLockStore.ready`, which is set after the database has opened) **and** it has been visible for at least 1.2 s, never longer than 8 s. If the picture fails to load, the native splash is still removed after 3 s so the user cannot get stuck. The overlay ignores touches and is hidden from screen readers. Timing rules are in `splashTiming.js` (7 tests).
+- With App Lock on, the splash fades into the PIN screen.
+- `cover` fills a screen taller or wider than 9:16 by cropping a little at the edges, so on very tall phones the top and bottom (or sides) of the picture are trimmed.
 
-**Why not the supplied splash images.** Android's splash is a solid colour plus one centred image, not a full-screen picture. `splash-background.png` is a gradient and `splash-screen-preview.png` is a mockup with the title and tagline baked in, which would be stretched or cropped. They are not used. If you want the full-screen look, that would need an in-app splash screen instead of the system one.
+**Checked without a device.** 604 Jest tests pass; a real Android prebuild in a throwaway copy generated the adaptive icon (background, foreground, monochrome) and the transparent native splash; `expo export` compiled a 7.7 MB Hermes bundle and the bundled splash file is byte-identical to the supplied one.
+**Not checked.** None of it has been seen on the emulator or a phone: the overlay's look, the hand-over from the native splash (any flicker), the real timing, and the launcher icon under the phone's mask. The splash change is native, so the dev client must be rebuilt (the same rebuild that adds `expo-print` for PDF): `export ANDROID_HOME=$HOME/Library/Android/sdk; export JAVA_HOME=$(/usr/libexec/java_home -v 21); npx expo run:android --no-bundler --device Pixel_7` with Metro running. If the old launcher icon still shows, uninstall and reinstall (Android caches launcher icons); uninstalling deletes the app's data, so create a backup first.
 
-**Known problems in the supplied art (not fixed, because that is your artwork).**
-- `adaptive-background.png` (and `splash-background.png`) have a **dark grey-blue band across the lower third** (about y=836 of 1024, brightness 155 against about 190 on either side). It shows along the bottom of the launcher icon. It looks like a cloud outline that did not render properly. Regenerating that layer without the band would fix it.
-- The adaptive foreground has the plane and the dashed heart trail but **no clouds**, so the launcher icon looks simpler than the full-artwork store icon.
-- `icon.png` now has a transparent background. That is fine for the app, but **Google Play needs a full-bleed 512 px icon with no transparency** (a separate file in the store listing), so keep the original `Images/app-icon.png` for that.
-
-**Verified.** `expo config` resolves; `expo-doctor` 21/21; a real Android prebuild in a throwaway copy generated `splashscreen_logo` in all five densities, `splashscreen_background` = `#4BB1F4`, `windowSplashScreenAnimatedIcon`, and an adaptive icon with background, foreground and monochrome layers. The generated legacy launcher icon has transparent corners and the full artwork.
-**Not verified.** None of it has been seen on the emulator. The splash is a **native change**, so the dev client must be rebuilt (the same rebuild that adds `expo-print` for PDF): `export ANDROID_HOME=$HOME/Library/Android/sdk; export JAVA_HOME=$(/usr/libexec/java_home -v 21); npx expo run:android --no-bundler --device Pixel_7` with Metro running. If the old launcher icon still shows afterwards, uninstall and reinstall the app (Android caches launcher icons), but note that uninstalling deletes the app's data, so create a backup first.
+**Things in the supplied art to be aware of (nothing was changed).**
+- The adaptive foreground (the plane and a white dashed heart trail, on transparent) is wider than Android's safe zone: its farthest pixel is 438 px from its centre against a circle radius of about 338 px. On a **circular** launcher mask the right-hand tip of the plane and parts of the trail will be cut off; squircle and rounded-square masks show more of it. This was measured, not seen on a phone.
+- `adaptive-background.png` has a **dark grey-blue band** across the lower third (about y=836 of 1024, brightness 155 against about 190 either side). It will show along the bottom of the icon.
+- `app-icon.png` has a white opaque canvas around the rounded square. Android builds the launcher icon from the adaptive layers, so this mainly affects the legacy and store icon. **Google Play wants a full-bleed 512 px icon** for the store listing, which is a separate file.
+- The foreground has no clouds, so the launcher icon looks simpler than `app-icon.png`.
+If any of these look wrong on the phone, the fix is a new set of files from the artwork source.
 
 ## Test that depended on the date (fixed 2026-11-12)
 `dashboard.test.js` "completing keeps the task visible" fixed "today" at 2026-11-11 but `toggleTask` stamps the real clock, so it failed once the real date passed midnight. It now freezes the clock to the test's day. The whole suite was then run with the clock moved by 0, 1, 40, -3 and 400 days: 597 of 597 pass each time, so there is no other hidden date dependence.
