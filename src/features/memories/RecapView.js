@@ -10,6 +10,7 @@ import { formatShortDate } from '../../utils/dates';
 import { formatPaise } from '../../utils/money';
 import { formatMl } from '../../utils/units';
 import { MemoryPhoto } from './MemoryPhoto';
+import { ReflectionCard } from './ReflectionCard';
 
 function Stat({ icon, tone, label, value, detail }) {
   const { spacing } = useTheme();
@@ -113,22 +114,29 @@ function MomentsCard({ moment }) {
   );
 }
 
-export function RecapView({ recap }) {
+export function RecapView({ recap, canReflect = true, onEditReflection }) {
   const { colors, spacing } = useTheme();
+  const reflectionCard = (
+    <ReflectionCard monthKey={recap.monthKey} reflection={recap.reflection} canWrite={canReflect} onEdit={onEditReflection} />
+  );
 
   if (recap.isEmpty) {
     return (
-      <EmptyState
-        icon={<NotebookPen size={32} color={colors.primary} />}
-        title="A quiet month"
-        message="Nothing was logged this month. Use the arrows to look at another month."
-      />
+      <View style={{ gap: spacing.lg }}>
+        <EmptyState
+          icon={<NotebookPen size={32} color={colors.primary} />}
+          title="A quiet month"
+          message="Nothing was logged this month. Use the arrows to look at another month."
+        />
+        {reflectionCard}
+      </View>
     );
   }
 
   return (
     <View style={{ gap: spacing.lg }}>
       {recap.moment ? <MomentsCard moment={recap.moment} /> : null}
+      {reflectionCard}
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
         <Stat

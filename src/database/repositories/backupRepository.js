@@ -20,11 +20,13 @@ export async function readAllTables(db) {
 // deleted before parents and inserted after them. Any failure rolls everything back, leaving the
 // database exactly as it was. Tables absent from the document are left untouched.
 export async function replaceAllTables(db, doc) {
-  // A backup made before subscriptions existed has no recurring tables. When it replaces the transactions, those
-  // tables are cleared too, because their occurrences point at transactions that are about to be replaced.
+  // A backup made before a table existed does not contain it. Restoring such a backup must not leave that table's
+  // current rows behind, so it is cleared whenever the table named here is being replaced: subscriptions point at
+  // transactions, and reflections describe months of diary and tracking data that is about to be replaced.
   const IMPLIED_BY = {
     recurring_expenses: 'transactions',
     recurring_expense_occurrences: 'transactions',
+    monthly_reflections: 'diary_entries',
   };
   const isReplaced = (name) =>
     doc.tables[name] !== undefined || (IMPLIED_BY[name] !== undefined && doc.tables[IMPLIED_BY[name]] !== undefined);

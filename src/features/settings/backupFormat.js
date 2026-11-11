@@ -118,6 +118,13 @@ export const BACKUP_TABLES = [
     },
   },
   {
+    name: 'monthly_reflections',
+    columns: {
+      id: [T], month_key: [T], went_well: [T, true], was_hard: [T, true], grateful_for: [T, true],
+      intention: [T, true], created_at: [T], updated_at: [T],
+    },
+  },
+  {
     name: 'goal_milestones',
     columns: {
       id: [T], goal_id: [T], title: [T], sort_order: [I], completed_at: [T, true], created_at: [T],
@@ -239,6 +246,7 @@ export function summarizeCounts(counts) {
     ['habits', counts.habits],
     ['to-dos', counts.tasks],
     ['goals', counts.goals],
+    ['monthly reflections', counts.monthly_reflections],
     ['water logs', counts.water_logs],
     ['weight entries', counts.weight_entries],
     ['mood check-ins', counts.mood_logs],

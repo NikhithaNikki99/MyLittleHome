@@ -13,6 +13,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { monthKeyOf, toDateKey } from '../../utils/dates';
 import { getMonthRecap, getTimeline } from './memoriesService';
 import { RecapView } from './RecapView';
+import { ReflectionSheet } from './ReflectionSheet';
 import { TimelineView } from './TimelineView';
 
 const TABS = [
@@ -27,6 +28,7 @@ export default function MemoriesScreen() {
   const [timeline, setTimeline] = useState(null);
   const [recap, setRecap] = useState(null);
   const [error, setError] = useState(null);
+  const [reflecting, setReflecting] = useState(false);
   const requestId = useRef(0);
 
   const load = useCallback(async (which, month) => {
@@ -77,8 +79,19 @@ export default function MemoriesScreen() {
       ) : tab === 'timeline' ? (
         <TimelineView timeline={content} />
       ) : (
-        <RecapView recap={content} />
+        <RecapView recap={content} canReflect={monthKey <= monthKeyOf(toDateKey())} onEditReflection={() => setReflecting(true)} />
       )}
+
+      <ReflectionSheet
+        visible={reflecting}
+        monthKey={monthKey}
+        reflection={recap?.monthKey === monthKey ? recap.reflection : null}
+        onClose={() => setReflecting(false)}
+        onSaved={() => {
+          setReflecting(false);
+          load('recap', monthKey);
+        }}
+      />
     </Screen>
   );
 }

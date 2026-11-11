@@ -11,6 +11,7 @@ import {
   weightBoundsInRange,
 } from '../../database/repositories/memoriesRepository';
 import { monthKeyOf, monthRange } from '../../utils/dates';
+import { getReflection } from './reflectionService';
 
 const PREVIEW_CHARS = 120;
 
@@ -72,7 +73,7 @@ export function averageWaterMl(totalMl, days) {
 
 export async function getMonthRecap(db, monthKey) {
   const { start, endExclusive } = monthRange(`${monthKey}-01`);
-  const [entryCount, moods, spend, habitDone, water, weight, momentRow] = await Promise.all([
+  const [entryCount, moods, spend, habitDone, water, weight, momentRow, reflection] = await Promise.all([
     countEntriesInRange(db, start, endExclusive),
     moodDistributionInRange(db, start, endExclusive),
     expenseTotalInRange(db, start, endExclusive),
@@ -80,6 +81,7 @@ export async function getMonthRecap(db, monthKey) {
     waterSummaryInRange(db, start, endExclusive),
     weightBoundsInRange(db, start, endExclusive),
     pickMomentEntry(db, start, endExclusive),
+    getReflection(db, monthKey),
   ]);
 
   let moment = null;
@@ -104,6 +106,7 @@ export async function getMonthRecap(db, monthKey) {
     waterDays: water.days,
     weightNote: describeWeightChange(weight.first, weight.last),
     moment,
+    reflection,
     isEmpty:
       entryCount === 0 && moodTotal === 0 && spend.count === 0 && habitDone === 0 && water.days === 0 && !weight.first,
   };
