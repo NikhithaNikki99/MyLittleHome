@@ -217,18 +217,25 @@ describe('tasks', () => {
   });
 
   test('completing keeps the task visible (done, sorted last); un-completing restores it', async () => {
-    const db = await freshDb();
-    await addTask(db, { title: 'Call mum', dueDate: TODAY });
-    await addTask(db, { title: 'Pay rent', dueDate: TODAY });
-    const call = (await loadDashboard(db, TODAY)).tasks.find((t) => t.title === 'Call mum');
+    // toggleTask stamps the real clock, and "completed today" is judged against TODAY, so the clock has to be
+    // inside TODAY. Without this the test only passed on the calendar day it was written.
+    jest.useFakeTimers({ now: new Date(2026, 10, 11, 12, 0, 0), doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+    try {
+      const db = await freshDb();
+      await addTask(db, { title: 'Call mum', dueDate: TODAY });
+      await addTask(db, { title: 'Pay rent', dueDate: TODAY });
+      const call = (await loadDashboard(db, TODAY)).tasks.find((t) => t.title === 'Call mum');
 
-    await toggleTask(db, call.id);
-    let tasks = (await loadDashboard(db, TODAY)).tasks;
-    expect(tasks.map((t) => [t.title, t.done])).toEqual([['Pay rent', false], ['Call mum', true]]);
+      await toggleTask(db, call.id);
+      let tasks = (await loadDashboard(db, TODAY)).tasks;
+      expect(tasks.map((t) => [t.title, t.done])).toEqual([['Pay rent', false], ['Call mum', true]]);
 
-    await toggleTask(db, call.id);
-    tasks = (await loadDashboard(db, TODAY)).tasks;
-    expect(tasks.every((t) => !t.done)).toBe(true);
+      await toggleTask(db, call.id);
+      tasks = (await loadDashboard(db, TODAY)).tasks;
+      expect(tasks.every((t) => !t.done)).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test('validates task input', async () => {
