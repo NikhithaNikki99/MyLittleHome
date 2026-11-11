@@ -8,7 +8,7 @@ import { FormError } from '../../../components/common/FormError';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { ValidationError } from '../../../utils/errors';
 import { loadReminders, saveReminder } from '../reminderActions';
-import { REMINDERS, defaultReminder, formatTime, stepTime } from '../reminderLogic';
+import { REMINDERS, defaultReminder, formatTime, nextFireDay, stepTime } from '../reminderLogic';
 
 function StepButton({ Icon, label, onPress }) {
   const { colors, radii, touchTarget } = useTheme();
@@ -45,7 +45,7 @@ function ReminderRow({ reminder, value, onChange }) {
         <View style={{ flex: 1 }}>
           <AppText variant="heading">{reminder.label}</AppText>
           <AppText variant="caption" muted>
-            {value.enabled ? `Every day at ${formatTime(value)}` : 'Off'}
+            {value.enabled ? `Every day at ${formatTime(value)}. Next one: ${nextFireDay(value)}.` : 'Off'}
           </AppText>
         </View>
         <View
@@ -115,7 +115,7 @@ export function RemindersSection() {
       </AppText>
       <AppText variant="caption" muted>
         Optional, gentle nudges from this phone. They are off until you turn one on, and nothing is sent
-        anywhere.
+        anywhere. Android may deliver them a little late to save battery.
       </AppText>
       {REMINDERS.map((r) => (
         <ReminderRow key={r.key} reminder={r} value={values[r.key]} onChange={(next) => change(r.key, next)} />

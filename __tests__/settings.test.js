@@ -6,6 +6,7 @@ import {
   REMINDERS,
   defaultReminder,
   formatTime,
+  nextFireDay,
   parseReminder,
   serializeReminder,
   stepTime,
@@ -81,6 +82,32 @@ describe('reminder time logic', () => {
     expect(parseReminder('diary', serializeReminder({ enabled: true, hour: 8, minute: 30 }))).toEqual({
       enabled: true, hour: 8, minute: 30,
     });
+  });
+});
+
+describe('when the next reminder arrives', () => {
+  const at = (h, m) => new Date(2026, 10, 11, h, m, 0);
+
+  test('a time that has already passed today first arrives tomorrow', () => {
+    // The reported case: an 11:00 PM reminder saved at 11:14 PM does nothing until the next evening.
+    expect(nextFireDay({ hour: 23, minute: 0 }, at(23, 14))).toBe('tomorrow');
+    expect(nextFireDay({ hour: 9, minute: 0 }, at(21, 0))).toBe('tomorrow');
+  });
+
+  test('a time still ahead arrives today', () => {
+    expect(nextFireDay({ hour: 23, minute: 0 }, at(22, 56))).toBe('today');
+    expect(nextFireDay({ hour: 15, minute: 0 }, at(9, 30))).toBe('today');
+    expect(nextFireDay({ hour: 0, minute: 15 }, at(0, 0))).toBe('today');
+  });
+
+  test('the current minute counts as already reached', () => {
+    expect(nextFireDay({ hour: 23, minute: 0 }, at(23, 0))).toBe('tomorrow');
+    expect(nextFireDay({ hour: 23, minute: 15 }, at(23, 14))).toBe('today');
+  });
+
+  test('midnight reminders', () => {
+    expect(nextFireDay({ hour: 0, minute: 0 }, at(23, 59))).toBe('tomorrow');
+    expect(nextFireDay({ hour: 0, minute: 0 }, at(0, 0))).toBe('tomorrow');
   });
 });
 

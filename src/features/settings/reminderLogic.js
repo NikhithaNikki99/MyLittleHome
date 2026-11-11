@@ -47,6 +47,13 @@ export function formatTime({ hour, minute }) {
   return `${h12}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
+// When a daily reminder next fires: 'today' if its time is still ahead, otherwise 'tomorrow'.
+// A time equal to the current minute counts as tomorrow, because it has already been reached when it is saved.
+export function nextFireDay({ hour, minute }, now = new Date()) {
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  return hour * 60 + minute > nowMinutes ? 'today' : 'tomorrow';
+}
+
 export function notificationIdentifier(key) {
   return `mlw-reminder-${key}`;
 }
