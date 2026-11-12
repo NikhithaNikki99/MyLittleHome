@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { Check, Flower2, Sprout } from 'lucide-react-native';
+import {Check, Sprout, TreePalm} from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppText } from '../common/AppText';
@@ -26,7 +26,7 @@ function GardenPreview({ items }) {
     >
       {items.map((h) =>
         h.complete ? (
-          <Flower2 key={h.id} color={colors.primary} size={28} />
+          <TreePalm key={h.id} color={colors.primary} size={28} />
         ) : (
           <Sprout key={h.id} color={colors.success} size={28} />
         ),
