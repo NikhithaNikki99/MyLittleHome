@@ -141,10 +141,6 @@ export default function DiaryScreen() {
         />
       ) : null}
 
-      {status === 'ready' && entries.length === 0 && !filtering ? (
-        <Button title="Write your first entry" onPress={openNew} />
-      ) : null}
-
       {entries.map((entry) => (
         <EntryCard key={entry.id} entry={entry} onPress={() => router.push(`/diary/${entry.id}`)} />
       ))}

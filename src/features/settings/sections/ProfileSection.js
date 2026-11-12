@@ -37,7 +37,7 @@ export function ProfileSection() {
         My profile
       </AppText>
       <TextField
-        label="Your name"
+        label="Your Name"
         value={draft}
         onChangeText={(t) => {
           setDraft(t);
@@ -50,11 +50,8 @@ export function ProfileSection() {
         onSubmitEditing={save}
         error={error}
       />
-      <AppText variant="caption" muted>
-        Shown in your Home greeting. It never leaves this phone.
-      </AppText>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-        <Button title="Save name" onPress={save} disabled={!dirty} />
+        <Button title="Save" onPress={save} disabled={!dirty} />
         {status ? (
           <AppText muted accessibilityLiveRegion="polite">
             {status}

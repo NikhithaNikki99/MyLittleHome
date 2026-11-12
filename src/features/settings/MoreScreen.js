@@ -48,9 +48,9 @@ function ProfileCard({ onPress }) {
           )}
         </View>
         <View style={{ flex: 1 }}>
-          <AppText variant="title">{name || 'Your name'}</AppText>
+          <AppText variant="title">{name || 'Hi there!'}</AppText>
           <AppText variant="caption" muted>
-            {name ? 'Tap to edit your profile' : 'Tap to add your name'}
+            {'Tap to edit your profile'}
           </AppText>
         </View>
       </Card>
