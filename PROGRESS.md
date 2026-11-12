@@ -247,7 +247,7 @@ Decision (user, 2026-11-11): **skip widgets for now.** No native code, dependenc
 | 4 Export and validated restore | Built and tested, awaiting device acceptance; PDF needs one dev-client rebuild |
 | 5 Widgets | Investigated; skipped by decision |
 
-Final automated state: **29 suites, 604 tests passing**, `expo-doctor` 21/21, Android bundle compiles. **Not yet done on a device:** phases 1 to 4 and the earlier-listed unverified screens. The Wellness "Water this week" clipped-text bug is still open.
+Final automated state: **31 suites, 649 tests passing**, `expo-doctor` 21/21, Android bundle compiles. **Not yet done on a device:** phases 1 to 4 and the earlier-listed unverified screens. The Wellness "Water this week" clipped-text bug is still open.
 
 ## App icon and splash screen (2026-11-12, seen on the Pixel_7 emulator)
 History: the first set of artwork was applied twice and rejected. The user then replaced the files in `assets/` with new artwork, which is what the app uses now. The six original files remain in `Images/` (untracked) and are no longer used.
@@ -269,6 +269,12 @@ History: the first set of artwork was applied twice and rejected. The user then 
 
 **Known.** The native splash colour shows briefly before the picture because Android always draws its own splash first. It now matches the picture's top edge, so the picture fades in over the same blue. A native screen that draws the picture itself would remove it but needs custom Kotlin.
 `Images/` is untracked; the original six files in it are not used by the app.
+
+## Home header by time of day, and nothing under the status bar (2026-11-12, seen on the emulator)
+**Time of day.** The Home header scene follows the hour, using the same boundaries as the greeting (05, 12, 17, 21) so the picture never disagrees with the words: morning (pale blue and peach, low sun), afternoon (blue sky, high sun), evening (the original pink sunset), night (navy sky, stars, moon). The sun is up 05:00 to 21:00 and the moon 21:00 to 05:00, each crossing the sky left to right on one arch (`timeOfDay.js`, pure and tested). `useTimeOfDay` refreshes at the next boundary while the app is open and when it returns from the background, and the greeting uses the same clock.
+**Contrast, and a test that was wrong.** The greeting and date sit over the bottom of the scene. My first contrast test blended only the sky and the page colour and said everything passed; the real screen measured 3.8:1 on the night date line because the dark hills show through the fade. The test now models the full stack (sky, both hills, then the fade) at the heights where each line sits, for all four themes and four periods, and was mutation-checked (putting the dark hills back fails exactly the four night tests). The night horizon is therefore a pale dusk glow (`#CFC6E4` sky bottom, `#A5A5CC` / `#9696C2` hills), the darkest values that pass.
+**Status bar.** Android draws the app edge to edge, so content scrolled up under the clock and icons, and Home deliberately put its artwork there. `Screen` now keeps the status-bar area as an empty strip and the scroll area starts below it, on all 18 screens (it also replaces the `edgeToEdgeTop` prop, which nothing used). On Home the strip is the colour of the top of the current scene, and the status-bar icons switch to light on the dark night strip. The icon colour is only set while Home is the focused tab, so it does not carry over to other tabs (checked: at a forced 23:00 Home had navy strip and light icons, Diary had the page colour and dark icons, and going back to Home restored the navy strip).
+**Not checked.** A real night (the emulator cannot change its clock; the check forced the hour for a moment and the code was removed); phones with a notch or camera cut-out taller than the status bar; the Home header on a very short screen.
 
 ## Test that depended on the date (fixed 2026-11-12)
 `dashboard.test.js` "completing keeps the task visible" fixed "today" at 2026-11-11 but `toggleTask` stamps the real clock, so it failed once the real date passed midnight. It now freezes the clock to the test's day. The whole suite was then run with the clock moved by 0, 1, 40, -3 and 400 days: 597 of 597 pass each time, so there is no other hidden date dependence.
